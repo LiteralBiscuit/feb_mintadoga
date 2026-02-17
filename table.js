@@ -3,7 +3,7 @@ import data from './data.json' with{type:"json"}
 class Table{
     #tbody;
     /**
-     * @type {bool}
+     * @type {boolean}
      */
     constructor(isTableWithRowspan){
       if(isTableWithRowspan){

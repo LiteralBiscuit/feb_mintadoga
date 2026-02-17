@@ -1,5 +1,6 @@
 import data from './data.json' with{type:"json"}
-import { createInputField, createForm } from './functions.js'
+import { createInputField, createForm, tbodyRenderRowspan, tbodyRenderColspan } from './functions.js'
+import { Manager } from './manager.js';
 
 class FormField{
     /**
@@ -12,11 +13,18 @@ class FormField{
     #input;
     /**
      * @param {import('./functions').FormFieldType} formFieldObj 
+     * @param {HTMLFormElement} parentForm 
      */
-    constructor(formFieldObj){
-        const outObj = createInputField(formFieldObj);
-        this.#errorElement = outObj[0];
-        this.#input = outObj[1];
+    constructor(formFieldObj, parentForm){
+        const formFieldObjlocal = {
+            "id" : formFieldObj.id,
+            "name" : formFieldObj.name,
+            "labelContent" : formFieldObj.label,
+            "parent" : parentForm
+        };
+        const outObj = createInputField(formFieldObjlocal);
+        this.#errorElement = outObj.errorElement;
+        this.#input = outObj.input;
     }
 
     get getErrorElement(){
@@ -29,20 +37,65 @@ class FormField{
 }
 
 class FormController{
+    /**
+     * @type {Manager}
+     */
+    #manager;
+    /**
+     * @type {FormField[]}
+     */
     #fieldList;
-    constructor(){
+    /**
+     * @type {import('./functions.js').FormFieldType[]}
+     */
+    #formArray;
+    constructor(formArray, manager){
         this.#fieldList = [];
-
+        this.#formArray = formArray;
+        this.#manager = manager;
+        document.body.appendChild(createForm(this.createFields.bind(this), this.eventListener.bind(this)));
     }
     /**
      * 
      * @param {HTMLFormElement} parentForm parentform
      */
     createFields(parentForm){
-        for (const formField of data.colspanFormFieldList){
-            const field = new FormField(formField);
-            this.#fieldList.push(field);
-            //to be continued
+        for (const formFieldObj of this.#formArray){
+            this.#fieldList.push(new FormField(formFieldObj, parentForm));
+        }
+    }
+
+    /**
+     * 
+     * @param {SubmitEvent} e 
+     */
+    eventListener(e){
+        e.preventDefault();
+        if (this.#manager.getRowspanos){
+            /**
+             * @type {import('./functions.js').RowspanType}
+             */
+            const rowObj = {
+                nemzet : this.#fieldList[0].getInput.value,
+                szerzo : this.#fieldList[1].getInput.value,
+                mu : this.#fieldList[2].getInput.value,
+                mu2 : this.#fieldList[3].getInput.value
+            }
+            this.#manager.addRow(this.#manager.getTable, rowObj, tbodyRenderRowspan);
+        }
+        else{
+            /**
+             * @type {import('./functions.js').ColspanType}
+             */
+            const rowObj = {
+                neve : this.#fieldList[0].getInput.value,
+                kor : this.#fieldList[1].getInput.value,
+                szerelme1 : this.#fieldList[2].getInput.value,
+                szerelme2 : this.#fieldList[3].getInput.value
+            }
+            this.#manager.addRow(this.#manager.getTable, rowObj, tbodyRenderColspan);
         }
     }
 }
+
+export {FormController}

@@ -49,6 +49,7 @@ class FormField{
         else{
             this.#errorElement.innerText = "";
         }
+        return result;
     }
 }
 
@@ -113,8 +114,6 @@ class FormController{
                     szerelme1 : this.#fieldList[2].getInput.value,
                     szerelme2 : this.#fieldList[3].getInput.value
                 }
-                console,console.log(rowObj);
-                
                 this.#manager.addRow(this.#manager.getTable, rowObj, tbodyRenderColspan);
                 e.target.reset();
             }

@@ -12,6 +12,10 @@ class FormField{
      */
     #input;
     /**
+     * @type {boolean}
+     */
+    #required;
+    /**
      * @param {import('./functions').FormFieldType} formFieldObj 
      * @param {HTMLFormElement} parentForm 
      */
@@ -25,6 +29,7 @@ class FormField{
         const outObj = createInputField(formFieldObjlocal);
         this.#errorElement = outObj.errorElement;
         this.#input = outObj.input;
+        this.#required = formFieldObj.required;
     }
 
     get getErrorElement(){
@@ -33,6 +38,17 @@ class FormField{
 
     get getInput(){
         return this.#input;
+    }
+
+    validate(){
+        let result = true;
+        if(this.#required && !this.#input.value){
+            result = false;
+            this.#errorElement.innerText = "Mező kitöltése kötelező!";
+        }
+        else{
+            this.#errorElement.innerText = "";
+        }
     }
 }
 
@@ -72,29 +88,47 @@ class FormController{
     eventListener(e){
         e.preventDefault();
         if (this.#manager.getRowspanos){
-            /**
-             * @type {import('./functions.js').RowspanType}
-             */
-            const rowObj = {
-                nemzet : this.#fieldList[0].getInput.value,
-                szerzo : this.#fieldList[1].getInput.value,
-                mu : this.#fieldList[2].getInput.value,
-                mu2 : this.#fieldList[3].getInput.value
+            if(this.validateFields()){
+                /**
+                 * @type {import('./functions.js').RowspanType}
+                 */
+                const rowObj = {
+                    nemzet : this.#fieldList[0].getInput.value,
+                    szerzo : this.#fieldList[1].getInput.value,
+                    mu : this.#fieldList[2].getInput.value,
+                    mu2 : this.#fieldList[3].getInput.value
+                }
+                this.#manager.addRow(this.#manager.getTable, rowObj, tbodyRenderRowspan);
+                e.target.reset();
             }
-            this.#manager.addRow(this.#manager.getTable, rowObj, tbodyRenderRowspan);
         }
         else{
-            /**
-             * @type {import('./functions.js').ColspanType}
-             */
-            const rowObj = {
-                neve : this.#fieldList[0].getInput.value,
-                kor : this.#fieldList[1].getInput.value,
-                szerelme1 : this.#fieldList[2].getInput.value,
-                szerelme2 : this.#fieldList[3].getInput.value
+            if(this.validateFields()){
+                /**
+                 * @type {import('./functions.js').ColspanType}
+                 */
+                const rowObj = {
+                    neve : this.#fieldList[0].getInput.value,
+                    kor : this.#fieldList[1].getInput.value,
+                    szerelme1 : this.#fieldList[2].getInput.value,
+                    szerelme2 : this.#fieldList[3].getInput.value
+                }
+                console,console.log(rowObj);
+                
+                this.#manager.addRow(this.#manager.getTable, rowObj, tbodyRenderColspan);
+                e.target.reset();
             }
-            this.#manager.addRow(this.#manager.getTable, rowObj, tbodyRenderColspan);
         }
+    }
+
+    validateFields(){
+        let result = true;
+        for (const field of this.#fieldList) {
+            if(!field.validate()){
+                result = false;
+            }
+        }
+        return result;
     }
 }
 

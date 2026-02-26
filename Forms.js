@@ -1,134 +1,137 @@
-import data from './data.json' with{type:"json"}
-import { createInputField, createForm, tbodyRenderRowspan, tbodyRenderColspan } from './functions.js'
-import { Manager } from './manager.js';
-
+import { createForm, createInputField } from "./functions.js";
+import { Manager } from "./manager.js";
 class FormField{
     /**
-     * @type {HTMLElement}
+     * @type {HTMLDivElement}
      */
-    #errorElement;
-    /**
-     * @type {HTMLLIElement}
-     */
-    #input;
+    #errorDiv;
     /**
      * @type {boolean}
      */
     #required;
     /**
-     * @param {import('./functions').FormFieldType} formFieldObj 
-     * @param {HTMLFormElement} parentForm 
+     * @type {HTMLInputElement}
+     */
+    #input;
+    /**
+     * @type {string}
+     */
+    #name;
+
+    /**
+     * 
+     * @param {import("./functions").FormFieldType} formFieldObj 
+     * @param {HTMLFormElement} parent 
      */
     constructor(formFieldObj, parentForm){
-        const formFieldObjlocal = {
-            "id" : formFieldObj.id,
-            "name" : formFieldObj.name,
-            "labelContent" : formFieldObj.label,
-            "parent" : parentForm
-        };
-        const outObj = createInputField(formFieldObjlocal);
-        this.#errorElement = outObj.errorElement;
-        this.#input = outObj.input;
+        const localObj = {
+            id : formFieldObj.id,
+            name : formFieldObj.name,
+            labelContent : formFieldObj.label,
+            parent : parentForm
+        }
+        const obj = createInputField(localObj);
+        this.#errorDiv = obj.errorElement;
+        this.#input = obj.input;
         this.#required = formFieldObj.required;
-    }
-
-    get getErrorElement(){
-        return this.#errorElement;
-    }
-
-    get getInput(){
-        return this.#input;
+        this.#name = formFieldObj.name;
     }
 
     validate(){
         let result = true;
         if(this.#required && !this.#input.value){
             result = false;
-            this.#errorElement.innerText = "Mező kitöltése kötelező!";
+            this.#errorDiv.innerText = "Kötelező";
         }
         else{
-            this.#errorElement.innerText = "";
+            this.#errorDiv.innerText = "";
         }
         return result;
     }
+
+    get errorDiv(){
+        return this.#errorDiv;
+    }
+    get inputValue(){
+        return this.#input.value;
+    }
+    get name(){
+        return this.#name;
+    }
 }
 
-class FormController{
+class FormConroller{
+    /**
+     * @type {FormField[]}
+     */
+    #formFieldArray;
     /**
      * @type {Manager}
      */
     #manager;
     /**
-     * @type {FormField[]}
+     * @type {HTMLFormElement}
      */
-    #fieldList;
+    #form;
+
     /**
-     * @type {import('./functions.js').FormFieldType[]}
+     * 
+     * @param {import("./functions").FormFieldType[]} formFieldObjs 
+     * @param {Manager} manager 
      */
-    #formArray;
-    constructor(formArray, manager){
-        this.#fieldList = [];
-        this.#formArray = formArray;
+    constructor(formFieldObjs, manager){
+        this.#formFieldArray = [];
         this.#manager = manager;
-        document.body.appendChild(createForm(this.createFields.bind(this), this.eventListener.bind(this)));
-    }
-    /**
-     * 
-     * @param {HTMLFormElement} parentForm parentform
-     */
-    createFields(parentForm){
-        for (const formFieldObj of this.#formArray){
-            this.#fieldList.push(new FormField(formFieldObj, parentForm));
-        }
-    }
-
-    /**
-     * 
-     * @param {SubmitEvent} e 
-     */
-    eventListener(e){
-        e.preventDefault();
-        if (this.#manager.getRowspanos){
-            if(this.validateFields()){
-                /**
-                 * @type {import('./functions.js').RowspanType}
-                 */
-                const rowObj = {
-                    nemzet : this.#fieldList[0].getInput.value,
-                    szerzo : this.#fieldList[1].getInput.value,
-                    mu : this.#fieldList[2].getInput.value,
-                    mu2 : this.#fieldList[3].getInput.value
-                }
-                this.#manager.addRow(this.#manager.getTable, rowObj, tbodyRenderRowspan);
-                e.target.reset();
+        /**
+         * 
+         * @param {HTMLFormElement} form 
+         */
+        const createFields = (form) => {
+            for (const formFieldObj of formFieldObjs) {
+                const formField = new FormField(formFieldObj, form);
+                this.#formFieldArray.push(formField);
             }
         }
-        else{
-            if(this.validateFields()){
-                /**
-                 * @type {import('./functions.js').ColspanType}
-                 */
-                const rowObj = {
-                    neve : this.#fieldList[0].getInput.value,
-                    kor : this.#fieldList[1].getInput.value,
-                    szerelme1 : this.#fieldList[2].getInput.value,
-                    szerelme2 : this.#fieldList[3].getInput.value
-                }
-                this.#manager.addRow(this.#manager.getTable, rowObj, tbodyRenderColspan);
-                e.target.reset();
+        /**
+         * 
+         * @param {SubmitEvent} e 
+         */
+        const eventListener = (e) =>{
+            e.preventDefault();
+            /**
+             * @type {HTMLFormElement}
+             */
+            const form = e.target;
+            const rowObj = this.validateFormAndCreateRowObj();
+            if(rowObj){
+                this.#manager.addRow(rowObj);
+                form.reset();
             }
         }
+        this.#form = createForm(createFields, eventListener);
+        document.body.appendChild(this.#form);
     }
 
-    validateFields(){
-        let result = true;
-        for (const field of this.#fieldList) {
-            if(!field.validate()){
-                result = false;
+    /**
+     * 
+     * @returns {import("./functions").RowspanType | import("./functions").ColspanType | null}
+     */
+    validateFormAndCreateRowObj(){
+        let result = {};
+        let valid = true;
+        for (const formField of this.#formFieldArray) {
+            if(formField.validate()){
+                result[formField.name] = formField.inputValue;
+            }
+            else{
+                valid = false;
             }
         }
-        return result;
+        if(valid){
+            return result;
+        }
+        return null;
     }
 }
 
-export {FormController}
+export {FormConroller}

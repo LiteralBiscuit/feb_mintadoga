@@ -1,36 +1,63 @@
-import { Table } from './table.js'
+/**
+ * @callback addCallback
+ * @param {import("./functions").ColspanType | import("./functions").RowspanType}
+ * @returns {void}
+ * @callback determineTableTypeCallback
+ * @param {import("./functions.js").ColspanType | import("./functions").RowspanType} firstRowObj
+ * @returns {boolean} true ha colspan
+ */
 class Manager{
     /**
-     * @type {HTMLTableElement}
+     * @type {addCallback}
      */
-    #table;
+    #addCallback;
     /**
-     * @type {boolean}
+     * @type {import("./functions").RowspanType[] | import("./functions").ColspanType[]}
      */
-    #rowspanos;
+    #dataArray;
+    /**
+     * @type {determineTableTypeCallback}
+     */
+    #determineTableTypeCallbackSetter;
+
     /**
      * 
-     * @param {boolean} rowspanos rowspanos a table vagy nem
+     * @param {determineTableTypeCallback} determineTableTypeCallback 
      */
-    constructor(rowspanos){
-        this.#table = new Table(rowspanos);
-        this.#rowspanos = rowspanos;
-    }
-    get getRowspanos(){
-        return this.#rowspanos;
-    }
-    get getTable(){
-        return this.#table;
+    constructor(){
+        this.#dataArray = [];
     }
 
     /**
-     * @param {Table} table a táblázat amihez írunk
-     * @param {import('./functions.js').RowspanType | import('./functions.js').ColspanType} data az sor object amit hozzáadunk a táblázathoz
-     * @param {Function} callback a sort létrehozó function
+     * @param {addCallback} callback 
      */
-    addRow(table, data, callback){
-        callback(table.getTbody, data);
+    set addCallback(callback){
+        this.#addCallback = callback;
+    }
+
+    /**
+     * @param {determineTableTypeCallback} callback 
+     */
+    set determineTableTypeCallbackSetter(callback){
+        this.#determineTableTypeCallbackSetter = callback;
+    }
+    /**
+     * 
+     * @returns {boolean}
+     */
+    determineTableType(){
+        return this.#determineTableTypeCallbackSetter(this.#dataArray[0]);
+    }
+
+    /**
+     * 
+     * @param {import("./functions").ColspanType | import("./functions").RowspanType} rowObj 
+     */
+    addRow(rowObj){
+        this.#dataArray.push(rowObj);
+        if(this.#addCallback){
+            this.#addCallback(rowObj);
+        }
     }
 }
-
 export {Manager}

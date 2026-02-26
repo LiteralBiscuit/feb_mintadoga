@@ -1,56 +1,41 @@
-import {createTableCell, tbodyRenderColspan, createTable, tbodyRenderRowspan} from './functions.js'
-import data from './data.json' with{type:"json"}
+/**
+ * @callback addrowCallback
+ * @param {HTMLTableSectionElement} tbody
+ * @param {import("./functions").ColspanType | import("./functions").RowspanType} rowObj
+ * @returns {void}
+ */
+import { createTable, createTableCell } from "./functions.js";
+import { Manager } from "./manager.js";
 class Table{
+    /**
+     * @type {Manager}
+     */
+    #manager;
+    /**
+     * @type {HTMLTableSectionElement}
+     */
     #tbody;
+    
     /**
-     * @type {boolean}
+     * 
+     * @param {import("./functions").HeaderArrayType} headerArray 
+     * @param {Manager} manager  
      */
-    constructor(isTableWithRowspan){
-      if(isTableWithRowspan){
-        this.#tbody = createTable(document.body, this.createRowspanHeader);
-        this.createRowspanTbody(tbodyRenderRowspan);
-      }
-      else{
-        this.#tbody = createTable(document.body, this.createColspanHeader);
-        this.createColspanTbody(tbodyRenderColspan);
-      }
-    }
-    get getTbody(){
-        return this.#tbody;
-    }
-
-    /**
-     * @type {import('./functions.js').HeaderCallback} 
-     */
-    createRowspanHeader(tr){
-        for (const headerObj of  data.rowspanHeaderArray) {
-            createTableCell("th", headerObj.name, tr);
-        }
-    }
-    /**
-     * @type {import('./functions.js').HeaderCallback} 
-     */
-    createColspanHeader(tr){
-        for (const headerObj of  data.colspanHeaderArray) {
-            const th = createTableCell("th", headerObj.name, tr);
-            if (headerObj.colspan){
-                th.colSpan = headerObj.colspan;
+    constructor(headerArray, manager){
+        this.#manager = manager;
+        const createHeader = (tr) =>{
+            for (const headerObj of headerArray) {
+                createTableCell("th", headerObj.name, tr);
             }
         }
+        this.#tbody = createTable(document.body, createHeader);
     }
 
     /**
-     * @param {Function} render a function ami létrehozza a sort
+     * @param {addrowCallback} addrowCallback
      */
-    createRowspanTbody(render){
-        for (const rowObj of data.rowspanTableArray) {
-            render(this.#tbody, rowObj);
-        }
-    }
-    createColspanTbody(render){
-        for (const rowObj of data.colspanDataArr) {
-            render(this.#tbody, rowObj);
-        }
+    setAppendRow(addrowCallback){
+        this.#manager.addCallback = (rowObj) => addrowCallback(this.#tbody, rowObj);
     }
 }
 
